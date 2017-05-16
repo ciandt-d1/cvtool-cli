@@ -79,6 +79,7 @@ class TenantController(ArgparseController):
         tenant.description = self.app.pargs.description
         try: 
             api_response = api_instance.post_tenant(tenant)
+            print("Created:\n%s" % api_response)
         except ApiException as e:
             print("Exception when calling TenantApi->create_tenant: %s\n" % e)
-        
+

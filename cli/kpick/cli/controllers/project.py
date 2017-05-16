@@ -33,12 +33,13 @@ class ProjectController(ArgparseController):
     def list(self):
         try: 
             api_response = api_instance.list_projects(self.app.pargs.tenant_id)
+            pprint(api_response)
             headers = ['ID', 'NAME', 'DESCRIPTION']
-            data = [[t.id, t.name, t.description] for t in api_response.items ]
+            data = [[t.id, t.name, t.description] for t in api_response.items]
             self.app.render(data, headers=headers)
             return data
         except ApiException as e:
-            print("Exception when calling TenantApi->get_tenant: %s\n" % e)
+            print("Exception when calling ProjectApi->list_projects: %s\n" % e)
 
 
     @expose(
@@ -63,4 +64,3 @@ class ProjectController(ArgparseController):
             api_response = api_instance.create_project(self.app.pargs.tenant_id, project)
         except ApiException as e:
             print("Exception when calling TenantApi->create_tenant: %s\n" % e)
-        

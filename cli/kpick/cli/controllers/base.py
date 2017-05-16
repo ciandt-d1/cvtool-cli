@@ -22,7 +22,7 @@ class BaseController(ArgparseController):
              (['-v', '--version'], dict(action='version', version=BANNER)),      
             ]
 
-    @expose(hide=True)
+    #@expose(hide=True)
     def default(self):
         self.app.args.print_help()
         # print("Inside BaseController.default().")
