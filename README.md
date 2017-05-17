@@ -53,3 +53,5 @@ docker build -t kpick .
 docker run --rm kpick
 
 ```
+
+![](https://raw.githubusercontent.com/ciandt-d1/cvtool-cli/master/kpick%20command%20line.png)
