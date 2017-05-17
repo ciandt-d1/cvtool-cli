@@ -3,7 +3,7 @@
 from cement.ext.ext_argparse import ArgparseController, expose
 
 
-VERSION = '0.1.0'
+VERSION = '0.1.1'
 
 BANNER = """
 Kingpick Computer Vision Tool v%s
@@ -15,14 +15,9 @@ class BaseController(ArgparseController):
     class Meta:
         label = 'base'
         description = 'Kingpick CLI client - computer vision tool'
-        arguments = [
-            (['-t', '--tenant'],
-             dict(help='the tenant id', dest='tenant', action='store',
-                  metavar='TEXT') ),
-             (['-v', '--version'], dict(action='version', version=BANNER)),      
-            ]
+        arguments = [(['-v', '--version'], dict(action='version', version=BANNER))]
 
-    #@expose(hide=True)
+    # @expose(hide=True)
     def default(self):
         self.app.args.print_help()
         # print("Inside BaseController.default().")

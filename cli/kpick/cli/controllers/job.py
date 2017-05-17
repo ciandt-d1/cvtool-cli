@@ -36,6 +36,13 @@ class JobController(ArgparseController):
     )
     def info(self):
         try:
+            if self.app.pargs.tenant is None:
+                print('Missing tenant parameter (-t)')
+                return None
+            if self.app.pargs.job_id is None:
+                print('Missing job id parameter (-i)')
+                return None
+
             while True:
                 api_response = requests.get(
                     kingpick_api_client.configuration.host +
@@ -73,6 +80,12 @@ class JobController(ArgparseController):
     )
     def ingest(self):
         try:
+            if self.app.pargs.tenant is None:
+                print('Missing tenant parameter (-t)')
+                return None
+            if self.app.pargs.csv is None:
+                print('Missing csv parameter (-c)')
+                return None
             api_response = requests.post(
                 kingpick_api_client.configuration.host +
                 '/jobs?tenant_id=' + self.app.pargs.tenant + '&project_id=default_project',

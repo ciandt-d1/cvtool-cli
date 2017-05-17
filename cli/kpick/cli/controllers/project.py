@@ -19,7 +19,7 @@ class ProjectController(ArgparseController):
         description = "Manages Projects"
         epilog = "the text at the bottom of --help."        
 
-    @expose(hide=True)
+    # @expose(hide=True)
     def default(self):
         self.app.args.print_help()
 
@@ -31,9 +31,12 @@ class ProjectController(ArgparseController):
         ]        
     )
     def list(self):
-        try: 
+        try:
+            if self.app.pargs.tenant_id is None:
+                print('Missing tenant id parameter (-t)')
+                return None
+
             api_response = api_instance.list_projects(self.app.pargs.tenant_id)
-            pprint(api_response)
             headers = ['ID', 'NAME', 'DESCRIPTION']
             data = [[t.id, t.name, t.description] for t in api_response.items]
             self.app.render(data, headers=headers)
@@ -56,11 +59,25 @@ class ProjectController(ArgparseController):
         ]        
     )
     def create(self):
-        project = kingpick_api_client.Project() # Project | Project to create
+        if self.app.pargs.tenant_id is None:
+            print('Missing tenant id parameter (-t)')
+            return None
+        if self.app.pargs.id is None:
+            print('Missing project id parameter (-i)')
+            return None
+        if self.app.pargs.name is None:
+            print('Missing project name parameter (-n)')
+            return None
+        if self.app.pargs.description is None:
+            print('Missing project description parameter (-d)')
+            return None
+
+        project = kingpick_api_client.Project()  # Project | Project to create
         project.id = self.app.pargs.id
         project.name = self.app.pargs.name
         project.description = self.app.pargs.description
         try: 
             api_response = api_instance.create_project(self.app.pargs.tenant_id, project)
+            print("Created:\n%s" % api_response)
         except ApiException as e:
             print("Exception when calling TenantApi->create_tenant: %s\n" % e)

@@ -1,8 +1,16 @@
 kingpick-cli
 ==============================================================================
 
+Requirements
+------------
+- Python3
+- Pip
+- Virtualenv
+
 Development
 ------------
+
+Inside `cli` directory:
 
 ```bash
 virtualenv -p python3 venv
@@ -19,6 +27,8 @@ kpick -h
 Installation
 ------------
 
+Inside `cli` directory:
+
 ```bash
 virtualenv -p python3 venv
 
@@ -33,6 +43,8 @@ kpick -h
 
 Docker
 ------------
+
+Inside `cli` directory:
 
 ```bash
 

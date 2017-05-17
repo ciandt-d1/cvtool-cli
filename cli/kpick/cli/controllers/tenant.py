@@ -19,7 +19,7 @@ class TenantController(ArgparseController):
         description = "Manages tenants"
         epilog = "the text at the bottom of --help."        
 
-    @expose(hide=True)
+    # @expose(hide=True)
     def default(self):
         self.app.args.print_help()
 
@@ -41,7 +41,7 @@ class TenantController(ArgparseController):
             api_response = api_instance.get_tenants()
 
             headers = ['ID', 'NAME', 'DESCRIPTION']
-            data = [ [t.id, t.name, t.description] for t in api_response.items ]
+            data = [[t.id, t.name, t.description] for t in api_response.items]
             self.app.render(data, headers=headers)
 
             # always return the data, some output handlers require this
@@ -60,20 +60,21 @@ class TenantController(ArgparseController):
                 dict(help='tenant name', action='store', dest='name')),
             (['-d', '--description'],
                 dict(help='tenant description', action='store', dest='description')),
-            # (['--source', '-s'],
-            #     dict(help="Source Image Dataset Storage", dest='source')),
-            # (['--dest', '-d'],
-            #     dict(help="Destination ML Dataset Storage", dest='dest')),
-            # (['--thumb', '-t'],
-            #     dict(help="Image Dataset Thumbnail Storage", dest='thumb')),
-            # (['--cloud-vision-key', '-v'],
-            #     dict(help="API Keys for Cloud Vision", dest='cloud_vision_key')),
-            # (['--cloud-ml-key', '-m'],
-            #     dict(help="API Keys for Cloud ML", dest='cloud_ml_key'))
         ]        
     )
     def create(self):
-        tenant = kingpick_api_client.Tenant() # Tenant | Tenant to create
+
+        if self.app.pargs.id is None:
+            print('Missing tenant id parameter (-i)')
+            return None
+        if self.app.pargs.name is None:
+            print('Missing tenant name parameter (-n)')
+            return None
+        if self.app.pargs.description is None:
+            print('Missing tenant description parameter (-d)')
+            return None
+
+        tenant = kingpick_api_client.Tenant()  # Tenant | Tenant to create
         tenant.id = self.app.pargs.id
         tenant.name = self.app.pargs.name
         tenant.description = self.app.pargs.description
