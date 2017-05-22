@@ -1,7 +1,10 @@
+import datetime
 import json
 import os
 
+import dateutil.parser
 import requests
+import time
 from cement.ext.ext_argparse import ArgparseController, expose
 
 import kingpick_api_client
@@ -35,6 +38,14 @@ class JobController(ArgparseController):
         ]
     )
     def info(self):
+
+        def datetime_to_local_timezone(dt):
+            epoch = dt.timestamp()
+            st_time = time.localtime(epoch)
+            tz = datetime.timezone(datetime.timedelta(
+                seconds=st_time.tm_gmtoff))
+            return dt.astimezone(tz)
+
         try:
             if self.app.pargs.tenant is None:
                 print('Missing tenant parameter (-t)')
@@ -50,15 +61,21 @@ class JobController(ArgparseController):
 
                 response_data = json.loads(api_response.text)
 
-                headers = ['ID', 'STARTED', 'ENDED', 'UPDATED', 'STATUS']
-                data = [[j.get('id', '-'), j.get('start_time', '-'),
-                         j.get('end_time', '-'), j.get('last_updated', '-'),
-                         j.get('status', '-')] for j in [response_data]]
+                headers = ['ID', 'STARTED', 'ENDED', 'IMAGE COUNT', 'STATUS']
+                data = [[j.get('id', '-'),
+                         datetime_to_local_timezone(dateutil.parser.parse(j['start_time']))
+                             .strftime('%d/%m/%Y %H:%M:%S') if 'start_time' in j else '-',
+                         datetime_to_local_timezone(dateutil.parser.parse(j['end_time']))
+                             .strftime('%d/%m/%Y %H:%M:%S') if 'end_time' in j else '-',
+                         j.get('image_count', '-'), j.get('status', '-')] for j in [response_data]]
                 os.system('clear')
                 self.app.render(data, headers=headers)
 
                 if response_data['status'] == 'FINISHED':
                     break
+
+                print('Updated at: ' + datetime.datetime.now().strftime('%d/%m/%Y %H:%M:%S'))
+                time.sleep(1)
 
             # always return the data, some output handlers require this
             # such as Json/Yaml (which don't use templates)
