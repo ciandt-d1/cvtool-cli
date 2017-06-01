@@ -5,6 +5,8 @@ import os
 import dateutil.parser
 import requests
 import time
+
+import yaml
 from cement.ext.ext_argparse import ArgparseController, expose
 
 import kingpick_api_client
@@ -38,8 +40,18 @@ class ImageController(ArgparseController):
     def export(self):
         try:
             if self.app.pargs.tenant is None:
-                print('Missing tenant parameter (-t)')
-                return None
+                try:
+                    config_file = os.path.expanduser('~/.%s/config.yaml' % self.app._meta.label)
+                    stream = open(config_file, 'r')
+                    data = yaml.load(stream)
+                    if 'default_tenant' in data.keys():
+                        self.app.pargs.tenant = data['default_tenant']
+                    else:
+                        print('Missing tenant parameter (-t)')
+                        return None
+                except Exception as e:
+                    print('Error: %s\n' % e)
+
             api_response = requests.post(
                 kingpick_api_client.configuration.host + '/images/' + self.app.pargs.tenant + '/export', data='')
             print(api_response.text)

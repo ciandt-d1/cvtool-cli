@@ -1,9 +1,10 @@
+import os
+
+import yaml
 from cement.ext.ext_argparse import ArgparseController, expose
 
-import time
 import kingpick_api_client
 from kingpick_api_client.rest import ApiException
-from pprint import pprint
 
 # create an instance of the API class
 kingpick_api_client.configuration.host = 'https://kingpick-dev.scanvas.me/v1'
@@ -33,8 +34,17 @@ class ProjectController(ArgparseController):
     def list(self):
         try:
             if self.app.pargs.tenant_id is None:
-                print('Missing tenant id parameter (-t)')
-                return None
+                try:
+                    config_file = os.path.expanduser('~/.%s/config.yaml' % self.app._meta.label)
+                    stream = open(config_file, 'r')
+                    data = yaml.load(stream)
+                    if 'default_tenant' in data.keys():
+                        self.app.pargs.tenant_id = data['default_tenant']
+                    else:
+                        print('Missing tenant parameter (-t)')
+                        return None
+                except Exception as e:
+                    print('Error: %s\n' % e)
 
             api_response = api_instance.list_projects(self.app.pargs.tenant_id)
             headers = ['ID', 'NAME', 'DESCRIPTION']
@@ -60,8 +70,17 @@ class ProjectController(ArgparseController):
     )
     def create(self):
         if self.app.pargs.tenant_id is None:
-            print('Missing tenant id parameter (-t)')
-            return None
+            try:
+                config_file = os.path.expanduser('~/.%s/config.yaml' % self.app._meta.label)
+                stream = open(config_file, 'r')
+                data = yaml.load(stream)
+                if 'default_tenant' in data.keys():
+                    self.app.pargs.tenant_id = data['default_tenant']
+                else:
+                    print('Missing tenant parameter (-t)')
+                    return None
+            except Exception as e:
+                print('Error: %s\n' % e)
         if self.app.pargs.id is None:
             print('Missing project id parameter (-i)')
             return None

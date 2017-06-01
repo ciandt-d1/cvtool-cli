@@ -1,3 +1,6 @@
+import os
+
+import yaml
 from cement.ext.ext_argparse import ArgparseController, expose
 
 import time
@@ -84,3 +87,41 @@ class TenantController(ArgparseController):
         except ApiException as e:
             print("Exception when calling TenantApi->create_tenant: %s\n" % e)
 
+    @expose(
+        help='Set default tenant',
+        arguments=[
+            (['-i', '--id'],
+                dict(help='tenant id', action='store', dest='id'))
+        ]
+    )
+    def set_default(self):
+
+        if self.app.pargs.id is None:
+            print('Missing tenant id parameter (-i)')
+            return None
+
+        try:
+            config_file = os.path.expanduser('~/.%s/config.yaml' % self.app._meta.label)
+
+            stream = open(config_file, 'r')
+            data = yaml.load(stream)
+            data['default_tenant'] = self.app.pargs.id
+
+            with open(config_file, 'w') as yaml_file:
+                yaml_file.write(yaml.dump(data, default_flow_style=False))
+
+        except ApiException as e:
+            print("Exception when calling TenantApi->create_tenant: %s\n" % e)
+
+    @expose(help='Get default tenant')
+    def get_default(self):
+        try:
+            config_file = os.path.expanduser('~/.%s/config.yaml' % self.app._meta.label)
+            stream = open(config_file, 'r')
+            data = yaml.load(stream)
+            if 'default_tenant' in data.keys():
+                print('default-tenant=%s' % data['default_tenant'])
+            else:
+                print('No default tenant')
+        except ApiException as e:
+            print("Exception when calling TenantApi->create_tenant: %s\n" % e)
