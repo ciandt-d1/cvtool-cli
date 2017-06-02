@@ -1,15 +1,14 @@
 import os
 
+import cvtool_cli_client
 import yaml
 from cement.ext.ext_argparse import ArgparseController, expose
-
-import kingpick_api_client
-from kingpick_api_client.rest import ApiException
+from cvtool_cli_client.rest import ApiException
 
 # create an instance of the API class
-kingpick_api_client.configuration.host = 'https://kingpick-dev.scanvas.me/v1'
-kingpick_api_client.configuration.debug = False
-api_instance = kingpick_api_client.ProjectApi()
+cvtool_cli_client.configuration.host = 'https://kingpick-dev.scanvas.me/v1'
+cvtool_cli_client.configuration.debug = False
+api_instance = cvtool_cli_client.ProjectApi()
 
 
 class ProjectController(ArgparseController):
@@ -91,7 +90,7 @@ class ProjectController(ArgparseController):
             print('Missing project description parameter (-d)')
             return None
 
-        project = kingpick_api_client.Project()  # Project | Project to create
+        project = cvtool_cli_client.Project()  # Project | Project to create
         project.id = self.app.pargs.id
         project.name = self.app.pargs.name
         project.description = self.app.pargs.description
