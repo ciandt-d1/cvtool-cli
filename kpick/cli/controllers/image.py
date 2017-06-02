@@ -1,21 +1,14 @@
-import datetime
-import json
 import os
 
-import dateutil.parser
+import cvtool_cli_client
 import requests
-import time
-
 import yaml
 from cement.ext.ext_argparse import ArgparseController, expose
 
-import kingpick_api_client
-from kingpick_api_client.rest import ApiException
-
 # create an instance of the API class
-kingpick_api_client.configuration.host = 'https://kingpick-dev.scanvas.me/v1'
-kingpick_api_client.configuration.debug = False
-api_instance = kingpick_api_client.TenantApi()
+cvtool_cli_client.configuration.host = 'https://kingpick-dev.scanvas.me/v1'
+cvtool_cli_client.configuration.debug = False
+api_instance = cvtool_cli_client.TenantApi()
 
 
 class ImageController(ArgparseController):
@@ -53,7 +46,7 @@ class ImageController(ArgparseController):
                     print('Error: %s\n' % e)
 
             api_response = requests.post(
-                kingpick_api_client.configuration.host + '/images/' + self.app.pargs.tenant + '/export', data='')
+                cvtool_cli_client.configuration.host + '/images/' + self.app.pargs.tenant + '/export', data='')
             print(api_response.text)
         except Exception as e:
             print("Error: %s\n" % e)

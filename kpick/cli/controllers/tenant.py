@@ -1,17 +1,14 @@
 import os
 
+import cvtool_cli_client
 import yaml
 from cement.ext.ext_argparse import ArgparseController, expose
-
-import time
-import kingpick_api_client
-from kingpick_api_client.rest import ApiException
-from pprint import pprint
+from cvtool_cli_client.rest import ApiException
 
 # create an instance of the API class
-kingpick_api_client.configuration.host = 'https://kingpick-dev.scanvas.me/v1'
-kingpick_api_client.configuration.debug = False
-api_instance = kingpick_api_client.TenantApi()
+cvtool_cli_client.configuration.host = 'https://kingpick-dev.scanvas.me/v1'
+cvtool_cli_client.configuration.debug = False
+api_instance = cvtool_cli_client.TenantApi()
 
 
 class TenantController(ArgparseController):
@@ -29,7 +26,7 @@ class TenantController(ArgparseController):
     # @expose(help='Changes tenant configuration')
     # def set_configuration(self):
     #     tenant_id = 'tenant_id_example' # str | tenant id
-    #     tenant = kingpick_api_client.Tenant() # Tenant | Tenant to create
+    #     tenant = cvtool_cli_client.Tenant() # Tenant | Tenant to create
 
     #     try: 
     #         api_response = api_instance.post_tenant(tenant)
@@ -77,7 +74,7 @@ class TenantController(ArgparseController):
             print('Missing tenant description parameter (-d)')
             return None
 
-        tenant = kingpick_api_client.Tenant()  # Tenant | Tenant to create
+        tenant = cvtool_cli_client.Tenant()  # Tenant | Tenant to create
         tenant.id = self.app.pargs.id
         tenant.name = self.app.pargs.name
         tenant.description = self.app.pargs.description

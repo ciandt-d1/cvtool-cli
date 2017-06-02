@@ -70,3 +70,11 @@ target/
 
 #Ipython Notebook
 .ipynb_checkpoints
+.idea/
+.git/
+.gitignore
+Dockerfile
+cloudbuild.yaml
+kpick command line.png
+bin/
+.dockerignore

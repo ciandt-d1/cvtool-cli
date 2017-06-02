@@ -1,5 +1,5 @@
-kingpick-cli
-==============================================================================
+cvtool-cli
+==========
 
 Requirements
 ------------
@@ -9,9 +9,6 @@ Requirements
 
 Development
 ------------
-
-Inside `cli` directory:
-
 ```bash
 virtualenv -p python3 venv
 
@@ -27,8 +24,6 @@ kpick -h
 Installation
 ------------
 
-Inside `cli` directory:
-
 ```bash
 virtualenv -p python3 venv
 
@@ -41,17 +36,16 @@ python setup.py install
 kpick -h
 ```
 
-Docker
+Development with Docker
 ------------
 
-Inside `cli` directory:
-
 ```bash
+ 
+# build local docker image
+docker build --build-arg setup_mode=develop -t cvtool/cli:local .
 
-docker build -t kpick .
-
-docker run --rm kpick
-
+# open bash
+docker run -it --rm --entrypoint bash -v ${PWD}/kpick:/usr/src/app/kpick cvtool/cli:local
 ```
 
 ![](https://raw.githubusercontent.com/ciandt-d1/cvtool-cli/master/kpick%20command%20line.png)

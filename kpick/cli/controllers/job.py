@@ -1,21 +1,19 @@
 import datetime
 import json
 import os
-
-import dateutil.parser
-import requests
 import time
 
+import cvtool_cli_client
+import dateutil.parser
+import requests
 import yaml
 from cement.ext.ext_argparse import ArgparseController, expose
-
-import kingpick_api_client
-from kingpick_api_client.rest import ApiException
+from cvtool_cli_client.rest import ApiException
 
 # create an instance of the API class
-kingpick_api_client.configuration.host = 'https://kingpick-dev.scanvas.me/v1'
-kingpick_api_client.configuration.debug = False
-api_instance = kingpick_api_client.TenantApi()
+cvtool_cli_client.configuration.host = 'https://kingpick-dev.scanvas.me/v1'
+cvtool_cli_client.configuration.debug = False
+api_instance = cvtool_cli_client.TenantApi()
 
 
 class JobController(ArgparseController):
@@ -67,7 +65,7 @@ class JobController(ArgparseController):
 
             while True:
                 api_response = requests.get(
-                    kingpick_api_client.configuration.host +
+                    cvtool_cli_client.configuration.host +
                     '/jobs/' + self.app.pargs.job_id + '?tenant_id=' + self.app.pargs.tenant)
 
                 response_data = json.loads(api_response.text)
@@ -124,7 +122,7 @@ class JobController(ArgparseController):
                 print('Missing csv parameter (-c)')
                 return None
             api_response = requests.post(
-                kingpick_api_client.configuration.host +
+                cvtool_cli_client.configuration.host +
                 '/jobs?tenant_id=' + self.app.pargs.tenant + '&project_id=default_project',
                 data=json.dumps({
                     'type': 'csv',
