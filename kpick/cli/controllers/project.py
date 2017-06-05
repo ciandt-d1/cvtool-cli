@@ -3,21 +3,17 @@ import os
 import cvtool_cli_client
 import yaml
 from cement.ext.ext_argparse import ArgparseController, expose
-from cvtool_cli_client.rest import ApiException
 
-# create an instance of the API class
-cvtool_cli_client.configuration.host = 'https://kingpick-dev.scanvas.me/v1'
-cvtool_cli_client.configuration.debug = False
-api_instance = cvtool_cli_client.ProjectApi()
+from .base import ApiClientMixin
 
 
-class ProjectController(ArgparseController):
+class ProjectController(ApiClientMixin, ArgparseController):
     class Meta:
         label = 'project'
         stacked_on = 'base'
         stacked_type = 'nested'
         description = "Manages Projects"
-        epilog = "the text at the bottom of --help."        
+        epilog = "the text at the bottom of --help."
 
     # @expose(hide=True)
     def default(self):
@@ -28,30 +24,27 @@ class ProjectController(ArgparseController):
         arguments=[
             (['-t', '--tenant_id'],
                 dict(help='tenant id', action='store', dest='tenant_id')),
-        ]        
+        ]
     )
     def list(self):
-        try:
-            if self.app.pargs.tenant_id is None:
-                try:
-                    config_file = os.path.expanduser('~/.%s/config.yaml' % self.app._meta.label)
-                    stream = open(config_file, 'r')
-                    data = yaml.load(stream)
-                    if 'default_tenant' in data.keys():
-                        self.app.pargs.tenant_id = data['default_tenant']
-                    else:
-                        print('Missing tenant parameter (-t)')
-                        return None
-                except Exception as e:
-                    print('Error: %s\n' % e)
+        if self.app.pargs.tenant_id is None:
+            try:
+                config_file = os.path.expanduser('~/.%s/config.yaml' % self.app._meta.label)
+                stream = open(config_file, 'r')
+                data = yaml.load(stream)
+                if 'default_tenant' in data.keys():
+                    self.app.pargs.tenant_id = data['default_tenant']
+                else:
+                    print('Missing tenant parameter (-t)')
+                    return None
+            except Exception as e:
+                print('Error: %s\n' % e)
 
-            api_response = api_instance.list_projects(self.app.pargs.tenant_id)
-            headers = ['ID', 'NAME', 'DESCRIPTION']
-            data = [[t.id, t.name, t.description] for t in api_response.items]
-            self.app.render(data, headers=headers)
-            return data
-        except ApiException as e:
-            print("Exception when calling ProjectApi->list_projects: %s\n" % e)
+        api_response = self.api_client.projects.list_projects(self.app.pargs.tenant_id)
+        headers = ['ID', 'NAME', 'DESCRIPTION']
+        data = [[t.id, t.name, t.description] for t in api_response.items]
+        self.app.render(data, headers=headers)
+        return data
 
 
     @expose(
@@ -65,7 +58,7 @@ class ProjectController(ArgparseController):
                 dict(help='project name', action='store', dest='name')),
             (['-d', '--description'],
                 dict(help='project description', action='store', dest='description')),
-        ]        
+        ]
     )
     def create(self):
         if self.app.pargs.tenant_id is None:
@@ -94,8 +87,5 @@ class ProjectController(ArgparseController):
         project.id = self.app.pargs.id
         project.name = self.app.pargs.name
         project.description = self.app.pargs.description
-        try: 
-            api_response = api_instance.create_project(self.app.pargs.tenant_id, project)
-            print("Created:\n%s" % api_response)
-        except ApiException as e:
-            print("Exception when calling TenantApi->create_tenant: %s\n" % e)
+        api_response = self.api_client.projects.create_project(self.app.pargs.tenant_id, project)
+        print("Created:\n%s" % api_response)

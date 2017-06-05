@@ -2,6 +2,7 @@
 
 from cement.ext.ext_argparse import ArgparseController, expose
 
+from kpick.core import api
 
 VERSION = '0.1.1'
 
@@ -17,18 +18,14 @@ class BaseController(ArgparseController):
         description = 'Kingpick CLI client - computer vision tool'
         arguments = [(['-v', '--version'], dict(action='version', version=BANNER))]
 
-    # @expose(hide=True)
+    @expose(hide=True)
     def default(self):
         self.app.args.print_help()
-        # print("Inside BaseController.default().")
 
-        # If using an output handler such as 'mustache', you could also
-        # render a data dictionary using a template.  For example:
-        #
-        #   data = dict(foo='bar')
-        #   self.app.render(data, 'default.mustache')
-        #
-        #
-        # The 'default.mustache' file would be loaded from
-        # ``kpick.cli.templates``, or ``/var/lib/kpick/templates/``.
-        #
+
+class ApiClientMixin(object):
+
+    def _setup(self, app):
+        super(ApiClientMixin, self)._setup(app)
+        self.api_client = api.CliRestClient.from_app(app)
+
