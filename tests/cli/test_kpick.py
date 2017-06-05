@@ -2,6 +2,7 @@
 
 from kpick.utils import test
 
+
 class CliTestCase(test.TestCase):
     def test_kpick_cli(self):
         argv = ['--foo=bar']

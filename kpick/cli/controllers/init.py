@@ -11,6 +11,7 @@ from cement.utils import shell
 from cement.utils.misc import minimal_logger
 from oauth2client.client import flow_from_clientsecrets
 
+from kpick.core import api
 
 LOG = minimal_logger(__name__)
 
@@ -18,7 +19,8 @@ CONFIG_FILE = 'config.yaml'
 CREDENTIALS_FILE = 'credentials.json'
 SCOPES = ['email', 'https://www.googleapis.com/auth/cloud-platform']
 CLIENT_SECRETS_FILE = 'client_secrets.json'
-CLIENT_SECRETS = {
+
+CLIENT_SECRETS_WEB = {
     "web": {
         "client_id": "1019062845561-ncr4dtvcshrrlg68nofsbmfnc7mf3g81.apps.googleusercontent.com",
         "project_id": "ciandt-cognitive-sandbox",
@@ -34,21 +36,33 @@ CLIENT_SECRETS = {
     }
 }
 
-class InitController(ArgparseController):
+CLIENT_SECRETS = {
+    "installed": {
+        "client_id": "1019062845561-ji7m6maafaueqf05li1b27vht5lgaebq.apps.googleusercontent.com",
+        "project_id": "ciandt-cognitive-sandbox",
+        "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+        "token_uri": "https://accounts.google.com/o/oauth2/token",
+        "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+        "client_secret": "jKGlKDPsauX_oww7TjfEy7vi",
+        "redirect_uris": ["urn:ietf:wg:oauth:2.0:oob", "http://localhost"]
+    }
+}
 
+
+class InitController(ArgparseController):
     class Meta:
         label = 'init'
         stacked_on = 'base'
         stacked_type = 'nested'
         description = "Initialize or reinitialize %s" % 'teste'
-        # arguments = [
-        #     (['-m', '--message'],
-        #      dict(help='message', action='store', dest='msg')),
-        # ]
+
+    def _setup(self, app):
+        super(InitController, self)._setup(app)
+        self.auth_api = api.AuthRestClient.from_app(self.app)
 
     @expose(help="Initialize or reinitialize", hide=True)
     def default(self):
-        #p = shell.Prompt("Press Enter To Continue", default='ENTER')
+        # p = shell.Prompt("Press Enter To Continue", default='ENTER')
         CONFIG_DIR = os.path.expanduser('~/.%s/' % self.app._meta.label)
         ensure_dir(CONFIG_DIR)
 
@@ -67,15 +81,29 @@ class InitController(ArgparseController):
             credentials.refresh(http)
 
         id_token = credentials.token_response.get('id_token')
-        h = httplib2.Http()
-        (resp_headers, content) = h.request("https://kingpick-dev.scanvas.me/api/auth/v1/token", "GET", headers={'Authorization':'Bearer '+id_token })
+        access_token = self.auth_api.token(id_token)
+
         config_file = os.path.join(CONFIG_DIR, CONFIG_FILE)
-        data = dict(
-            id_token = id_token,
-            access_token = content.decode('utf-8')
-        )
-        with open(config_file, 'w') as outfile:
-            yaml.safe_dump(data, outfile, default_flow_style=False)
+
+        if not os.path.exists(config_file):
+            data = dict(
+                kpick=dict(
+                    id_token=id_token,
+                    access_token=access_token
+                )
+            )
+            with open(config_file, 'w') as outfile:
+                yaml.safe_dump(data, outfile, default_flow_style=False)
+        else:
+            with open(config_file, 'r+') as outfile:
+                data = yaml.safe_load(outfile)
+                import copy
+                new_data = copy.deepcopy(data)
+                new_data['kpick']['id_token'] = id_token
+                new_data['kpick']['access_token'] = access_token
+
+            with open(config_file, 'w') as outfile:
+                yaml.safe_dump(new_data, outfile, default_flow_style=False)
 
 
 def ensure_dir(file_path):
@@ -85,9 +113,8 @@ def ensure_dir(file_path):
 
 
 class WebFlowFlags(object):
-
     def __init__(self):
-        self.noauth_local_webserver = False
+        self.noauth_local_webserver = True
 
     @property
     def logging_level(self):
@@ -98,7 +125,7 @@ class WebFlowFlags(object):
         return self._noauth_local_webserver
 
     @noauth_local_webserver.setter
-    def noauth_local_webserver(self, value): 
+    def noauth_local_webserver(self, value):
         self._noauth_local_webserver = value
 
     @property

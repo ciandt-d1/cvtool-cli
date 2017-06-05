@@ -1,6 +1,6 @@
-cement >= 2.10.2
-oauth2client >= 4.0.0
-tabulate == 0.7.7
-pyYaml >= 3.12
-git+https://github.com/ciandt-d1/cvtool-cli-python-client.git#egg=cvtool-cli-client
-requests >= 2.17.3
+cement==2.10.2
+oauth2client==4.1.0
+tabulate==0.7.7
+pyYaml==3.12
+git+https://github.com/ciandt-d1/cvtool-cli-python-client.git@05830b108d54d93df432211e9f9926ca732d6474#egg=cvtool-cli-client
+requests==2.17.3

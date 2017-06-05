@@ -1,22 +1,27 @@
 """kingpick-cli main application entry point."""
+import os
 
 from cement.core.foundation import CementApp
 from cement.utils.misc import init_defaults
+from cement.utils import fs
 from cement.core.exc import FrameworkError, CaughtSignal
 from kpick.core import exc
 
-# Application default.  Should update config/kpick.conf to reflect any
+
+# Application default.  Should update config/kpick.yaml to reflect any
 # changes, or additions here.
 defaults = init_defaults('kpick')
 
-# All internal/external plugin configurations are loaded from here
-defaults['kpick']['plugin_config_dir'] = '/etc/kpick/plugins.d'
+# defaults['kpick']['api_host'] = 'https://kingpick-dev.scanvas.me'
+# # All internal/external plugin configurations are loaded from here
+# defaults['kpick']['plugin_config_dir'] = '/etc/kpick/plugins.d'
+#
+# # External plugins (generally, do not ship with application code)
+# defaults['kpick']['plugin_dir'] = '/var/lib/kpick/plugins'
+#
+# # External templates (generally, do not ship with application code)
+# defaults['kpick']['template_dir'] = '/var/lib/kpick/templates'
 
-# External plugins (generally, do not ship with application code)
-defaults['kpick']['plugin_dir'] = '/var/lib/kpick/plugins'
-
-# External templates (generally, do not ship with application code)
-defaults['kpick']['template_dir'] = '/var/lib/kpick/templates'
 
 
 class App(CementApp):
@@ -25,8 +30,14 @@ class App(CementApp):
         extensions = ['yaml', 'tabulate', 'json']
         output_handler = 'tabulate'
         config_handler = 'yaml'
+        config_extension = '.yaml'
+        config_files = [
+            os.path.join('/', 'etc', label, '%s%s' % (label, config_extension)),
+            os.path.join(fs.HOME_DIR, '.%s%s' % (label, config_extension)),
+            os.path.join(fs.HOME_DIR, '.%s' % label, 'config'),
+            os.path.join(fs.HOME_DIR, '.%s' % label, 'config%s' % config_extension),
+        ]
 
-        config_files = ['~/.kpick/config.yaml']
         config_defaults = defaults
 
         # All built-in application bootstrapping (always run)
@@ -55,23 +66,19 @@ class TestApp(App):
         exit_on_close = False
 
 
-# Define the applicaiton object outside of main, as some libraries might wish
+# Define the application object outside of main, as some libraries might wish
 # to import it as a global (rather than passing it into another class/func)
 app = App()
+
 
 def main():
     with app:
         try:
             app.run()
-        
+
         except exc.Error as e:
             # Catch our application errors and exit 1 (error)
             print('Error > %s' % e)
-            app.exit_code = 1
-            
-        except FrameworkError as e:
-            # Catch framework errors and exit 1 (error)
-            print('FrameworkError > %s' % e)
             app.exit_code = 1
             
         except CaughtSignal as e:
@@ -79,6 +86,17 @@ def main():
             print('CaughtSignal > %s' % e)
             app.exit_code = 0
 
+        except FrameworkError as e:
+            # Catch framework errors and exit 1 (error)
+            print('FrameworkError > %s' % e)
+            app.exit_code = 1
+
+        finally:
+            # Maybe we want to see a full-stack trace for the above
+            # exceptions, but only if --debug was passed?
+            if app.debug:
+                import traceback
+                traceback.print_exc()
 
 if __name__ == '__main__':
     main()

@@ -1,22 +1,16 @@
 import datetime
-import json
 import os
 import time
 
-import cvtool_cli_client
 import dateutil.parser
-import requests
 import yaml
 from cement.ext.ext_argparse import ArgparseController, expose
-from cvtool_cli_client.rest import ApiException
 
 # create an instance of the API class
-cvtool_cli_client.configuration.host = 'https://kingpick-dev.scanvas.me/v1'
-cvtool_cli_client.configuration.debug = False
-api_instance = cvtool_cli_client.TenantApi()
+from .base import ApiClientMixin
 
 
-class JobController(ArgparseController):
+class JobController(ApiClientMixin, ArgparseController):
     class Meta:
         label = 'job'
         stacked_on = 'base'
@@ -46,52 +40,49 @@ class JobController(ArgparseController):
                 seconds=st_time.tm_gmtoff))
             return dt.astimezone(tz)
 
-        try:
-            if self.app.pargs.tenant is None:
-                try:
-                    config_file = os.path.expanduser('~/.%s/config.yaml' % self.app._meta.label)
-                    stream = open(config_file, 'r')
-                    data = yaml.load(stream)
-                    if 'default_tenant' in data.keys():
-                        self.app.pargs.tenant = data['default_tenant']
-                    else:
-                        print('Missing tenant parameter (-t)')
-                        return None
-                except Exception as e:
-                    print('Error: %s\n' % e)
-            if self.app.pargs.job_id is None:
-                print('Missing job id parameter (-i)')
-                return None
+        tenant_id = self.app.pargs.tenant
+        job_id = self.app.pargs.job_id
 
-            while True:
-                api_response = requests.get(
-                    cvtool_cli_client.configuration.host +
-                    '/jobs/' + self.app.pargs.job_id + '?tenant_id=' + self.app.pargs.tenant)
+        if tenant_id is None:
+            try:
+                config_file = os.path.expanduser('~/.%s/config.yaml' % self.app._meta.label)
+                stream = open(config_file, 'r')
+                data = yaml.load(stream)
+                if 'default_tenant' in data.keys():
+                    tenant_id = data['default_tenant']
+                else:
+                    print('Missing tenant parameter (-t)')
+                    return None
+            except Exception as e:
+                print('Error: %s\n' % e)
 
-                response_data = json.loads(api_response.text)
+        if job_id is None:
+            print('Missing job id parameter (-i)')
+            return None
 
-                headers = ['ID', 'STARTED', 'ENDED', 'IMAGE COUNT', 'STATUS']
-                data = [[j.get('id', '-'),
-                         datetime_to_local_timezone(dateutil.parser.parse(j['start_time']))
-                             .strftime('%d/%m/%Y %H:%M:%S') if 'start_time' in j else '-',
-                         datetime_to_local_timezone(dateutil.parser.parse(j['end_time']))
-                             .strftime('%d/%m/%Y %H:%M:%S') if 'end_time' in j else '-',
-                         j.get('image_count', '-'), j.get('status', '-')] for j in [response_data]]
-                os.system('clear')
-                self.app.render(data, headers=headers)
+        while True:
 
-                if response_data['status'] == 'FINISHED':
-                    break
+            job = self.api_client.jobs.get(tenant_id, job_id)
 
-                print('Updated at: ' + datetime.datetime.now().strftime('%d/%m/%Y %H:%M:%S'))
-                time.sleep(1)
+            headers = ['ID', 'STARTED', 'ENDED', 'IMAGE COUNT', 'STATUS']
+            data = [[j.get('id', '-'),
+                     datetime_to_local_timezone(dateutil.parser.parse(j['start_time']))
+                         .strftime('%d/%m/%Y %H:%M:%S') if 'start_time' in j else '-',
+                     datetime_to_local_timezone(dateutil.parser.parse(j['end_time']))
+                         .strftime('%d/%m/%Y %H:%M:%S') if 'end_time' in j else '-',
+                     j.get('image_count', '-'), j.get('status', '-')] for j in [response_data]]
+            os.system('clear')
+            self.app.render(data, headers=headers)
 
-            # always return the data, some output handlers require this
-            # such as Json/Yaml (which don't use templates)
-            return data
+            if job.status == 'FINISHED':
+                break
 
-        except ApiException as e:
-            print("Exception when calling TenantApi->get_tenant: %s\n" % e)
+            print('Updated at: ' + datetime.datetime.now().strftime('%d/%m/%Y %H:%M:%S'))
+            time.sleep(1)
+
+        # always return the data, some output handlers require this
+        # such as Json/Yaml (which don't use templates)
+        return data
 
     @expose(
         help='Creates a new job',
@@ -105,35 +96,29 @@ class JobController(ArgparseController):
         ]
     )
     def ingest(self):
-        try:
-            if self.app.pargs.tenant is None:
-                try:
-                    config_file = os.path.expanduser('~/.%s/config.yaml' % self.app._meta.label)
-                    stream = open(config_file, 'r')
-                    data = yaml.load(stream)
-                    if 'default_tenant' in data.keys():
-                        self.app.pargs.tenant = data['default_tenant']
-                    else:
-                        print('Missing tenant parameter (-t)')
-                        return None
-                except Exception as e:
-                    print('Error: %s\n' % e)
-            if self.app.pargs.csv is None:
-                print('Missing csv parameter (-c)')
-                return None
-            api_response = requests.post(
-                cvtool_cli_client.configuration.host +
-                '/jobs?tenant_id=' + self.app.pargs.tenant + '&project_id=default_project',
-                data=json.dumps({
-                    'type': 'csv',
-                    'auto_start': True,
-                    'input_params': {
-                        'csv_uri': self.app.pargs.csv,
-                        'vision_api_features': 'LANDMARK_DETECTION,LOGO_DETECTION,LABEL_DETECTION,IMAGE_PROPERTIES'
-                    }
-                }),
-                headers={'Content-Type': 'application/json'}
-            )
-            print(api_response.text)
-        except ApiException as e:
-            print("Exception when calling: %s\n" % e)
+        tenant_id = self.app.pargs.tenant
+        if tenant_id is None:
+            try:
+                config_file = os.path.expanduser('~/.%s/config.yaml' % self.app._meta.label)
+                stream = open(config_file, 'r')
+                data = yaml.load(stream)
+                if 'default_tenant' in data.keys():
+                    tenant_id = data['default_tenant']
+                else:
+                    print('Missing tenant parameter (-t)')
+                    return None
+            except Exception as e:
+                print('Error: %s\n' % e)
+        if self.app.pargs.csv is None:
+            print('Missing csv parameter (-c)')
+            return None
+
+        data = {
+            'type': 'csv',
+            'auto_start': True,
+            'input_params': {
+                'csv_uri': self.app.pargs.csv,
+                'vision_api_features': 'LANDMARK_DETECTION,LOGO_DETECTION,LABEL_DETECTION,IMAGE_PROPERTIES'
+            }
+        }
+        self.api_client.jobs.create(tenant_id, data)
