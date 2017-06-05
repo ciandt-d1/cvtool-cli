@@ -39,10 +39,6 @@ class CliRestClient(object):
     def jobs(self):
         return client.JobApi(api_client=self._api_client)
 
-    @property
-    def export(self):
-        return client.ExportApi(api_client=self._api_client)
-
 
 class AuthRestClient(object):
     def __init__(self, host, debug=False):
