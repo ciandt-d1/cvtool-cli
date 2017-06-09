@@ -36,4 +36,4 @@ class ImageController(ApiClientMixin, ArgparseController):
             else:
                 print('Missing tenant parameter (-t)')
                 return None
-        self.api_client.image.export(tenant_id)
+        self.api_client.images.export(tenant_id)

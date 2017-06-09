@@ -49,7 +49,7 @@ class AuthRestClient(object):
         api_client = client.ApiClient(host=self._host + '/v1',
                                       header_name='Authorization',
                                       header_value='Bearer ' + id_token)
-        # client.configuration.access_token = id_token
+        client.configuration.access_token = id_token
         api_client.user_agent = USER_AGENT
         return client.AuthApi(api_client=api_client).token()
 
