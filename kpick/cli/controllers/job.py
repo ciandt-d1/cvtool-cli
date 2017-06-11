@@ -121,4 +121,5 @@ class JobController(ApiClientMixin, ArgparseController):
                 'vision_api_features': 'LANDMARK_DETECTION,LOGO_DETECTION,LABEL_DETECTION,IMAGE_PROPERTIES'
             }
         }
-        self.api_client.jobs.create(tenant_id, data)
+        job = self.api_client.jobs.create(tenant_id, data)
+        print(job.id)
