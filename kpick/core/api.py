@@ -1,4 +1,5 @@
 import cvtool_cli_client as client
+from ..cli.main import app
 
 USER_AGENT = 'cvtool-cli/1.0'
 
@@ -7,37 +8,32 @@ Job = client.Job
 
 
 class CliRestClient(object):
-    def __init__(self, host, access_token, debug=False):
-        # client.configuration.host = host + '/v1'
-        client.configuration.debug = debug
-        client.configuration.access_token = access_token
-        self._api_client = client.ApiClient(host=host + '/v1',
-                                            header_name='Authorization',
-                                            header_value='Bearer ' + access_token)
-        self._api_client.user_agent = USER_AGENT
 
-    @classmethod
-    def from_app(cls, app):
+    @staticmethod
+    def _client():
         app_name = app.args.prog
         host = app.config.get(app_name, 'api_host')
         access_token = app.config.get(app_name, 'access_token')
-        return cls(host=host, access_token=access_token, debug=app.debug)
+        client.configuration.access_token = access_token
+        api_client = client.ApiClient(host=host + '/v1')
+        api_client.user_agent = USER_AGENT
+        return api_client
 
     @property
     def tenants(self):
-        return client.TenantApi(api_client=self._api_client)
+        return client.TenantApi(api_client=self._client())
 
     @property
     def projects(self):
-        return client.ProjectApi(api_client=self._api_client)
+        return client.ProjectApi(api_client=self._client())
 
     @property
     def images(self):
-        return client.ImageApi(api_client=self._api_client)
+        return client.ImageApi(api_client=self._client())
 
     @property
     def jobs(self):
-        return client.JobApi(api_client=self._api_client)
+        return client.JobApi(api_client=self._client())
 
 
 class AuthRestClient(object):
@@ -46,9 +42,7 @@ class AuthRestClient(object):
         self._host = host
 
     def token(self, id_token):
-        api_client = client.ApiClient(host=self._host + '/v1',
-                                      header_name='Authorization',
-                                      header_value='Bearer ' + id_token)
+        api_client = client.ApiClient(host=self._host + '/v1')
         client.configuration.access_token = id_token
         api_client.user_agent = USER_AGENT
         return client.AuthApi(api_client=api_client).token()

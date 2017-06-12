@@ -25,7 +25,7 @@ class BaseController(ArgparseController):
 
 class ApiClientMixin(object):
 
-    def _setup(self, app):
-        super(ApiClientMixin, self)._setup(app)
-        self.api_client = api.CliRestClient.from_app(app)
+    @property
+    def api_client(self):
+        return api.CliRestClient()
 
