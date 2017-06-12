@@ -1,16 +1,17 @@
 """kingpick-cli main application entry point."""
 import os
 
-from cement.core.foundation import CementApp
-from cement.utils.misc import init_defaults
-from cement.utils import fs
 from cement.core.exc import FrameworkError, CaughtSignal
-from kpick.core import exc
+from cement.core.foundation import CementApp
+from cement.utils import fs
+from cement.utils.misc import init_defaults
 
+from kpick.core import exc
 
 # Application default.  Should update config/kpick.yaml to reflect any
 # changes, or additions here.
 defaults = init_defaults('kpick')
+
 
 # defaults['kpick']['api_host'] = 'https://kingpick-dev.scanvas.me'
 # # All internal/external plugin configurations are loaded from here
@@ -21,7 +22,6 @@ defaults = init_defaults('kpick')
 #
 # # External templates (generally, do not ship with application code)
 # defaults['kpick']['template_dir'] = '/var/lib/kpick/templates'
-
 
 
 class App(CementApp):
@@ -55,6 +55,7 @@ class App(CementApp):
 
 class TestApp(App):
     """A test app that is better suited for testing."""
+
     class Meta:
         # default argv to empty (don't use sys.argv)
         argv = []
@@ -80,7 +81,7 @@ def main():
             # Catch our application errors and exit 1 (error)
             print('Error > %s' % e)
             app.exit_code = 1
-            
+
         except CaughtSignal as e:
             # Default Cement signals are SIGINT and SIGTERM, exit 0 (non-error)
             print('CaughtSignal > %s' % e)
@@ -97,6 +98,7 @@ def main():
             if app.debug:
                 import traceback
                 traceback.print_exc()
+
 
 if __name__ == '__main__':
     main()

@@ -1,59 +1,47 @@
-import json
-import os
+import urllib
 
-import sys
-import yaml
 from cement.ext.ext_argparse import ArgparseController, expose
-from cement.utils import shell
 from cement.utils.shell import Prompt
 
+from kpick.core import configuration
+from kpick.core.auth import login
 
-CONFIG_FILE = 'config.yaml'
-CREDENTIALS_FILE = 'credentials.json'
-SCOPES = ['email', 'https://www.googleapis.com/auth/cloud-platform']
-CLIENT_SECRETS_FILE = 'client_secrets.json'
+WELCOME_MESSAGE = """Welcome! This command will take you through the configuration of cvtool.
 
-CLIENT_SECRETS_WEB = {
-    "web": {
-        "client_id": "1019062845561-ncr4dtvcshrrlg68nofsbmfnc7mf3g81.apps.googleusercontent.com",
-        "project_id": "ciandt-cognitive-sandbox",
-        "auth_uri": "https://accounts.google.com/o/oauth2/auth",
-        "token_uri": "https://accounts.google.com/o/oauth2/token",
-        "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
-        "client_secret": "iVlVhvP7CeYfC-nwXfi0J-ol",
-        "redirect_uris": [
-            "http://localhost:8085/",
-            "http://localhost:8090/",
-            "http://localhost:8080/"
-        ]
-    }
-}
+Your settings will be saved to {}.
 
-CLIENT_SECRETS = {
-    "installed": {
-        "client_id": "1019062845561-ji7m6maafaueqf05li1b27vht5lgaebq.apps.googleusercontent.com",
-        "project_id": "ciandt-cognitive-sandbox",
-        "auth_uri": "https://accounts.google.com/o/oauth2/auth",
-        "token_uri": "https://accounts.google.com/o/oauth2/token",
-        "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
-        "client_secret": "jKGlKDPsauX_oww7TjfEy7vi",
-        "redirect_uris": ["urn:ietf:wg:oauth:2.0:oob", "http://localhost"]
-    }
-}
+"""
+ASK_FOR_LOGIN_MSG = "To continue, you must login. Would you like to login now?"
 
-WELCOME_MESSAGE = """Press Welcome! This command will take you through the configuration of cvtool."""
 
-ASK_FOR_LOGIN_MSG = "To continue, you must login. Would you like to login ?"
+class LoginPrompt(Prompt):
+    class Meta:
+        text = ASK_FOR_LOGIN_MSG
+        options = ['Y', 'n']
+        options_separator = '|'
+        default = 'Y'
+        clear = False
+
+        # def process_input(self):
+        #     if self.input.lower() == 'y':
+        #         auth = AuthController()
+        #         auth.login()
+        #     else:
+        #         print("User doesn't agree! I'm outta here")
+        #         sys.exit(1)
 
 
 class ApiServerUriPrompt(Prompt):
     class Meta:
-        text = "Whats the API server uri ?"
         default = 'https://api.cvtool.com'
+        text = "What's the API server uri [{}] ?".format(default)
         clear = False
+        auto = False
 
     def process_input(self):
-        print(self.input)
+        if not is_valid(self.input):
+            print('Please enter a valid URI')
+            self.input = None
 
 
 class InitController(ArgparseController):
@@ -66,19 +54,26 @@ class InitController(ArgparseController):
     @expose(help="Initialize or reinitialize", hide=True)
     def default(self):
 
-        config_dir = os.path.expanduser('~/.%s/' % self.app._meta.label)
-        config_file = os.path.join(config_dir, CONFIG_FILE)
-        if not os.path.exists(config_file):
-            self.app.log.debug('%s does not exist. Initializing.'.format(config_file))
-            p = ApiServerUriPrompt()
-        else:
-            self.app.log.debug('reinitializing')
-            LoginPrompt()
+        self.app.log.debug('%s does not exist. Initializing.'.format(configuration.CONFIG_FILE))
+        print(WELCOME_MESSAGE.format(configuration.CONFIG_FILE))
+
+        api_server_uri_prompt = ApiServerUriPrompt()
+        while api_server_uri_prompt.input is None:
+            api_server_uri_prompt.prompt()
+
+        configuration.create(api_uri=api_server_uri_prompt.input)
+        self.app.config.merge(configuration.get())
+
+        login_prompt = LoginPrompt()
+        if login_prompt.input.lower() == 'y':
+            login()
 
 
-def ensure_dir(file_path):
-    directory = os.path.dirname(file_path)
-    if not os.path.exists(directory):
-        os.makedirs(directory)
+min_attributes = ('scheme', 'netloc')
 
 
+def is_valid(url, qualifying=None):
+    qualifying = min_attributes if qualifying is None else qualifying
+    token = urllib.parse.urlparse(url)
+    return all([getattr(token, qualifying_attr)
+                for qualifying_attr in qualifying])
