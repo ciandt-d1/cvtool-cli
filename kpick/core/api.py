@@ -5,6 +5,7 @@ USER_AGENT = 'cvtool-cli/1.0'
 
 Tenant = client.Tenant
 Job = client.Job
+Settings = client.Settings
 
 
 class CliRestClient(object):

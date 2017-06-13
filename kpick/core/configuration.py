@@ -37,13 +37,18 @@ def create(api_uri=None, id_token=None, access_token=None, debug=False):
         yaml.safe_dump(data, outfile, default_flow_style=False)
 
 
-def update(id_token, access_token):
+def update(id_token=None, access_token=None, api_uri=None):
     with open(CONFIG_FILE, 'r+') as outfile:
         data = yaml.safe_load(outfile)
         import copy
         new_data = copy.deepcopy(data)
-        new_data[app._meta.label]['id_token'] = id_token
-        new_data[app._meta.label]['access_token'] = access_token
+
+        if id_token:
+            new_data[app._meta.label]['id_token'] = id_token
+        if access_token:
+            new_data[app._meta.label]['access_token'] = access_token
+        if api_uri:
+            new_data[app._meta.label]['api_host'] = api_uri
 
     with open(CONFIG_FILE, 'w') as outfile:
         yaml.safe_dump(new_data, outfile, default_flow_style=False)

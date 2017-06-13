@@ -41,6 +41,10 @@ class TenantController(ApiClientMixin, ArgparseController):
              dict(help='tenant name', action='store', dest='name')),
             (['-d', '--description'],
              dict(help='tenant description', action='store', dest='description')),
+            (['--google-cloud-project'],
+             dict(help='google cloud project where resources (storage, bigquery, etc) will be allocated ', action='store', dest='google_cloud_project')),
+            (['--staging-bucket'],
+             dict(help='GCS bucket for temporary files', action='store', dest='gcs_staging_bucket')),
         ]
     )
     def create(self):
@@ -51,14 +55,22 @@ class TenantController(ApiClientMixin, ArgparseController):
         if self.app.pargs.name is None:
             print('Missing tenant name parameter (-n)')
             return None
-        if self.app.pargs.description is None:
-            print('Missing tenant description parameter (-d)')
+        if self.app.pargs.google_cloud_project is None:
+            print('Missing tenant google-cloud-project parameter (--google-cloud-project)')
+            return None
+        if self.app.pargs.gcs_staging_bucket is None:
+            print('Missing tenant staging-bucket parameter (--staging-bucket)')
             return None
 
-        tenant = api.Tenant()  # Tenant | Tenant to create
+        tenant = api.Tenant()
         tenant.id = self.app.pargs.id
         tenant.name = self.app.pargs.name
         tenant.description = self.app.pargs.description
+        tenant.settings = dict(
+            google_cloud_project=self.app.pargs.google_cloud_project,
+            gcs_staging_bucket=self.app.pargs.gcs_staging_bucket,
+        )
+
         api_response = self.api_client.tenants.post_tenant(tenant)
         print("Created:\n%s" % api_response)
 

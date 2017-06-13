@@ -71,6 +71,7 @@ class JobController(ApiClientMixin, ArgparseController):
                      datetime_to_local_timezone(dateutil.parser.parse(j['end_time']))
                          .strftime('%d/%m/%Y %H:%M:%S') if 'end_time' in j else '-',
                      j.get('image_count', '-'), j.get('status', '-')] for j in [response_data]]
+
             os.system('clear')
             self.app.render(data, headers=headers)
 
@@ -118,7 +119,9 @@ class JobController(ApiClientMixin, ArgparseController):
             'auto_start': True,
             'input_params': {
                 'csv_uri': self.app.pargs.csv,
-                'vision_api_features': 'LANDMARK_DETECTION,LOGO_DETECTION,LABEL_DETECTION,IMAGE_PROPERTIES'
+                'exif.enable': True,
+                'vision_api.enable': True,
+                'vision_api.features': 'LANDMARK_DETECTION,LOGO_DETECTION,LABEL_DETECTION,IMAGE_PROPERTIES'
             }
         }
         job = self.api_client.jobs.create(tenant_id, data)

@@ -53,7 +53,6 @@ class InitController(ArgparseController):
 
     @expose(help="Initialize or reinitialize", hide=True)
     def default(self):
-
         self.app.log.debug('%s does not exist. Initializing.'.format(configuration.CONFIG_FILE))
         print(WELCOME_MESSAGE.format(configuration.CONFIG_FILE))
 
@@ -61,12 +60,15 @@ class InitController(ArgparseController):
         while api_server_uri_prompt.input is None:
             api_server_uri_prompt.prompt()
 
-        configuration.create(api_uri=api_server_uri_prompt.input)
-        self.app.config.merge(configuration.get())
-
-        login_prompt = LoginPrompt()
-        if login_prompt.input.lower() == 'y':
-            login()
+        if not configuration.exists():
+            configuration.create(api_uri=api_server_uri_prompt.input)
+            self.app.config.merge(configuration.get())
+            login_prompt = LoginPrompt()
+            if login_prompt.input.lower() == 'y':
+                login()
+        else:
+            configuration.update(api_uri=api_server_uri_prompt.input)
+            self.app.config.merge(configuration.get())
 
 
 min_attributes = ('scheme', 'netloc')
